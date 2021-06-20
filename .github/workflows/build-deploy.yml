@@ -1,0 +1,49 @@
+name: build-deploy
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ./SampleDotvvmApp.csproj
+
+    - name: Build
+      run: dotnet build ./SampleDotvvmApp.csproj --no-restore
+
+    - name: Publish
+      run: dotnet publish ./SampleDotvvmApp.csproj -c Release -o ./web/
+
+    - name: Zip Deployment
+      run: cd ./web && zip -r ../web.zip *
+
+    - name: Get Version Number
+      id: version
+      uses: nanzm/get-time-action@v1.1
+      with:
+        timeZone: 0
+        format: 'YYYY-MM-DD-HH-mm-ss'
+
+    - name: Deploy to EB
+      uses: einaregilsson/beanstalk-deploy@v16
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: sample-dotvvm-app
+        environment_name: Sampledotvvmapp-env
+        region: us-west-1
+        version_label: "${{ steps.version.outputs.time }}"
+        deployment_package: web.zip
