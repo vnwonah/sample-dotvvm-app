@@ -14,7 +14,7 @@ namespace SampleDotvvmApp.ViewModels
 
         public DefaultViewModel()
         {
-            Title = "Hello from DotVVM!";
+            Title = "Hello from DotVVM Virtual Conference!!!";
         }
     }
 }
